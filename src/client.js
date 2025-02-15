@@ -352,6 +352,7 @@ class RPCClient extends EventEmitter {
         state: args.state,
         details: args.details,
         timestamps,
+        type: args.type,
         assets,
         party,
         secrets,
