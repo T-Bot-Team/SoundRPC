@@ -1,35 +1,54 @@
-<div align="center">
-  <br />
-  <p>
-    <a href="https://discord.gg/bRCvFy9"><img src="https://discordapp.com/api/guilds/222078108977594368/embed.png" alt="Discord server" /></a>
-    <a href="https://www.npmjs.com/package/discord-rpc"><img src="https://img.shields.io/npm/v/discord-rpc.svg?maxAge=3600" alt="NPM version" /></a>
-    <a href="https://www.npmjs.com/package/discord-rpc"><img src="https://img.shields.io/npm/dt/discord-rpc.svg?maxAge=3600" alt="NPM downloads" /></a>
-    <a href="https://david-dm.org/discordjs/RPC"><img src="https://img.shields.io/david/discordjs/RPC.svg?maxAge=3600" alt="Dependencies" /></a>
-  </p>
-  <p>
-    <a href="https://nodei.co/npm/discord-rpc/"><img src="https://nodei.co/npm/discord-rpc.png?downloads=true&stars=true" alt="NPM info" /></a>
-  </p>
-</div>
+# SoundRPC
 
-# Discord.js RPC Extension
-
-### [Documentation](https://discord.js.org/#/docs/rpc/)
+### Overview
+SoundRPC is a fork of the popular [discord-rpc](https://github.com/discordjs/RPC) package, tailored to assist internal projects with a focus on voice-related functions. By removing unwanted features, it reduces bloat and enhances performance.
 
 ### [Rich Presence Example](https://github.com/discordjs/RPC/blob/master/example)
 
-### __Browser__ Example
+### Importing the Package
 
+#### ES5
+```javascript
+const rpc = require("@t_bot-team/discord-rpc");
+const client = new rpc.Client({ transport: "ipc" });
+```
+
+#### ES6
+```javascript
+import rpc from "@t_bot-team/discord-rpc";
+const client = new rpc.Client({ transport: "ipc" });
+```
+
+### Examples
+
+#### Browser Example
 ```javascript
 const clientId = '287406016902594560';
-const scopes = ['rpc', 'rpc.api', 'messages.read'];
+const scopes = ['rpc', 'messages.read'];
 
-const client = new RPC.Client({ transport: 'websocket' });
+const client = new rpc.Client({ transport: 'websocket' });
 
 client.on('ready', () => {
   console.log('Logged in as', client.application.name);
   console.log('Authed for user', client.user.username);
 
   client.selectVoiceChannel('81384788862181376');
+});
+
+// Log in to RPC with client id
+client.login({ clientId, scopes });
+```
+
+#### IPC Example
+```javascript
+const clientId = '287406016902594560';
+const scopes = ['rpc']; // For scopes, you will need to specify the clientSecret in the login options
+
+const client = new rpc.Client({ transport: 'ipc' });
+
+client.on('ready', () => {
+  console.log('Logged in as', client.application.name);
+  console.log('Authed for user', client.user.username);
 });
 
 // Log in to RPC with client id

@@ -1,5 +1,4 @@
 node_modules/**
 package-lock.json
-browser.js
-test/auth.js
-docs-out
+.idea/
+test.js

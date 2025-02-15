@@ -1,5 +1,3 @@
-'use strict';
-
 const EventEmitter = require('events');
 const { setTimeout, clearTimeout } = require('timers');
 const fetch = require('node-fetch');
@@ -242,7 +240,6 @@ class RPCClient extends EventEmitter {
       });
   }
 
-
   /**
    * Fetch a guild
    * @param {Snowflake} id Guild ID
@@ -254,16 +251,7 @@ class RPCClient extends EventEmitter {
   }
 
   /**
-   * Fetch all guilds
-   * @param {number} [timeout] Timeout request
-   * @returns {Promise<Collection<Snowflake, Guild>>}
-   */
-  getGuilds(timeout) {
-    return this.request(RPCCommands.GET_GUILDS, { timeout });
-  }
-
-  /**
-   * Get a channel
+   * Get a voice channel
    * @param {Snowflake} id Channel ID
    * @param {number} [timeout] Timeout request
    * @returns {Promise<Channel>}
@@ -273,17 +261,13 @@ class RPCClient extends EventEmitter {
   }
 
   /**
-   * Get all channels
-   * @param {Snowflake} [id] Guild ID
+   * Get selected voice channel
+   * @param {Snowflake} id Channel ID
    * @param {number} [timeout] Timeout request
-   * @returns {Promise<Collection<Snowflake, Channel>>}
+   * @returns {Promise<Channel>}
    */
-  async getChannels(id, timeout) {
-    const { channels } = await this.request(RPCCommands.GET_CHANNELS, {
-      timeout,
-      guild_id: id,
-    });
-    return channels;
+  getSelectedChannel(id, timeout) {
+    return this.request(RPCCommands.GET_SELECTED_VOICE_CHANNEL, { channel_id: id, timeout });
   }
 
   /**
@@ -304,51 +288,6 @@ class RPCClient extends EventEmitter {
    */
 
   /**
-   * Tell discord which devices are certified
-   * @param {CertifiedDevice[]} devices Certified devices to send to discord
-   * @returns {Promise}
-   */
-  setCertifiedDevices(devices) {
-    return this.request(RPCCommands.SET_CERTIFIED_DEVICES, {
-      devices: devices.map((d) => ({
-        type: d.type,
-        id: d.uuid,
-        vendor: d.vendor,
-        model: d.model,
-        related: d.related,
-        echo_cancellation: d.echoCancellation,
-        noise_suppression: d.noiseSuppression,
-        automatic_gain_control: d.automaticGainControl,
-        hardware_mute: d.hardwareMute,
-      })),
-    });
-  }
-
-  /**
-   * @typedef {UserVoiceSettings}
-   * @prop {Snowflake} id ID of the user these settings apply to
-   * @prop {?Object} [pan] Pan settings, an object with `left` and `right` set between
-   * 0.0 and 1.0, inclusive
-   * @prop {?number} [volume=100] The volume
-   * @prop {bool} [mute] If the user is muted
-   */
-
-  /**
-   * Set the voice settings for a user, by id
-   * @param {Snowflake} id ID of the user to set
-   * @param {UserVoiceSettings} settings Settings
-   * @returns {Promise}
-   */
-  setUserVoiceSettings(id, settings) {
-    return this.request(RPCCommands.SET_USER_VOICE_SETTINGS, {
-      user_id: id,
-      pan: settings.pan,
-      mute: settings.mute,
-      volume: settings.volume,
-    });
-  }
-
-  /**
    * Move the user to a voice channel
    * @param {Snowflake} id ID of the voice channel
    * @param {Object} [options] Options
@@ -360,107 +299,7 @@ class RPCClient extends EventEmitter {
   selectVoiceChannel(id, { timeout, force = false } = {}) {
     return this.request(RPCCommands.SELECT_VOICE_CHANNEL, { channel_id: id, timeout, force });
   }
-
-  /**
-   * Move the user to a text channel
-   * @param {Snowflake} id ID of the voice channel
-   * @param {Object} [options] Options
-   * @param {number} [options.timeout] Timeout for the command
-   * have explicit permission from the user.
-   * @returns {Promise}
-   */
-  selectTextChannel(id, { timeout } = {}) {
-    return this.request(RPCCommands.SELECT_TEXT_CHANNEL, { channel_id: id, timeout });
-  }
-
-  /**
-   * Get current voice settings
-   * @returns {Promise}
-   */
-  getVoiceSettings() {
-    return this.request(RPCCommands.GET_VOICE_SETTINGS)
-      .then((s) => ({
-        automaticGainControl: s.automatic_gain_control,
-        echoCancellation: s.echo_cancellation,
-        noiseSuppression: s.noise_suppression,
-        qos: s.qos,
-        silenceWarning: s.silence_warning,
-        deaf: s.deaf,
-        mute: s.mute,
-        input: {
-          availableDevices: s.input.available_devices,
-          device: s.input.device_id,
-          volume: s.input.volume,
-        },
-        output: {
-          availableDevices: s.output.available_devices,
-          device: s.output.device_id,
-          volume: s.output.volume,
-        },
-        mode: {
-          type: s.mode.type,
-          autoThreshold: s.mode.auto_threshold,
-          threshold: s.mode.threshold,
-          shortcut: s.mode.shortcut,
-          delay: s.mode.delay,
-        },
-      }));
-  }
-
-  /**
-   * Set current voice settings, overriding the current settings until this session disconnects.
-   * This also locks the settings for any other rpc sessions which may be connected.
-   * @param {Object} args Settings
-   * @returns {Promise}
-   */
-  setVoiceSettings(args) {
-    return this.request(RPCCommands.SET_VOICE_SETTINGS, {
-      automatic_gain_control: args.automaticGainControl,
-      echo_cancellation: args.echoCancellation,
-      noise_suppression: args.noiseSuppression,
-      qos: args.qos,
-      silence_warning: args.silenceWarning,
-      deaf: args.deaf,
-      mute: args.mute,
-      input: args.input ? {
-        device_id: args.input.device,
-        volume: args.input.volume,
-      } : undefined,
-      output: args.output ? {
-        device_id: args.output.device,
-        volume: args.output.volume,
-      } : undefined,
-      mode: args.mode ? {
-        type: args.mode.type,
-        auto_threshold: args.mode.autoThreshold,
-        threshold: args.mode.threshold,
-        shortcut: args.mode.shortcut,
-        delay: args.mode.delay,
-      } : undefined,
-    });
-  }
-
-  /**
-   * Capture a shortcut using the client
-   * The callback takes (key, stop) where `stop` is a function that will stop capturing.
-   * This `stop` function must be called before disconnecting or else the user will have
-   * to restart their client.
-   * @param {Function} callback Callback handling keys
-   * @returns {Promise<Function>}
-   */
-  captureShortcut(callback) {
-    const subid = subKey(RPCEvents.CAPTURE_SHORTCUT_CHANGE);
-    const stop = () => {
-      this._subscriptions.delete(subid);
-      return this.request(RPCCommands.CAPTURE_SHORTCUT, { action: 'STOP' });
-    };
-    this._subscriptions.set(subid, ({ shortcut }) => {
-      callback(shortcut, stop);
-    });
-    return this.request(RPCCommands.CAPTURE_SHORTCUT, { action: 'START' })
-      .then(() => stop);
-  }
-
+  
   /**
    * Sets the presence for the logged in user.
    * @param {object} args The rich presence to pass.
@@ -477,18 +316,10 @@ class RPCClient extends EventEmitter {
         start: args.startTimestamp,
         end: args.endTimestamp,
       };
-      if (timestamps.start instanceof Date) {
-        timestamps.start = Math.round(timestamps.start.getTime());
-      }
-      if (timestamps.end instanceof Date) {
-        timestamps.end = Math.round(timestamps.end.getTime());
-      }
-      if (timestamps.start > 2147483647000) {
-        throw new RangeError('timestamps.start must fit into a unix timestamp');
-      }
-      if (timestamps.end > 2147483647000) {
-        throw new RangeError('timestamps.end must fit into a unix timestamp');
-      }
+      if (timestamps.start instanceof Date) timestamps.start = Math.round(timestamps.start.getTime());
+      if (timestamps.end instanceof Date) timestamps.end = Math.round(timestamps.end.getTime());
+      if (timestamps.start > 2147483647000) throw new RangeError('timestamps.start must fit into a unix timestamp');
+      if (timestamps.end > 2147483647000) throw new RangeError('timestamps.end must fit into a unix timestamp');
     }
     if (
       args.largeImageKey || args.largeImageText
@@ -540,100 +371,6 @@ class RPCClient extends EventEmitter {
     return this.request(RPCCommands.SET_ACTIVITY, {
       pid,
     });
-  }
-
-  /**
-   * Invite a user to join the game the RPC user is currently playing
-   * @param {User} user The user to invite
-   * @returns {Promise}
-   */
-  sendJoinInvite(user) {
-    return this.request(RPCCommands.SEND_ACTIVITY_JOIN_INVITE, {
-      user_id: user.id || user,
-    });
-  }
-
-  /**
-   * Request to join the game the user is playing
-   * @param {User} user The user whose game you want to request to join
-   * @returns {Promise}
-   */
-  sendJoinRequest(user) {
-    return this.request(RPCCommands.SEND_ACTIVITY_JOIN_REQUEST, {
-      user_id: user.id || user,
-    });
-  }
-
-  /**
-   * Reject a join request from a user
-   * @param {User} user The user whose request you wish to reject
-   * @returns {Promise}
-   */
-  closeJoinRequest(user) {
-    return this.request(RPCCommands.CLOSE_ACTIVITY_JOIN_REQUEST, {
-      user_id: user.id || user,
-    });
-  }
-
-  createLobby(type, capacity, metadata) {
-    return this.request(RPCCommands.CREATE_LOBBY, {
-      type,
-      capacity,
-      metadata,
-    });
-  }
-
-  updateLobby(lobby, { type, owner, capacity, metadata } = {}) {
-    return this.request(RPCCommands.UPDATE_LOBBY, {
-      id: lobby.id || lobby,
-      type,
-      owner_id: (owner && owner.id) || owner,
-      capacity,
-      metadata,
-    });
-  }
-
-  deleteLobby(lobby) {
-    return this.request(RPCCommands.DELETE_LOBBY, {
-      id: lobby.id || lobby,
-    });
-  }
-
-  connectToLobby(id, secret) {
-    return this.request(RPCCommands.CONNECT_TO_LOBBY, {
-      id,
-      secret,
-    });
-  }
-
-  sendToLobby(lobby, data) {
-    return this.request(RPCCommands.SEND_TO_LOBBY, {
-      id: lobby.id || lobby,
-      data,
-    });
-  }
-
-  disconnectFromLobby(lobby) {
-    return this.request(RPCCommands.DISCONNECT_FROM_LOBBY, {
-      id: lobby.id || lobby,
-    });
-  }
-
-  updateLobbyMember(lobby, user, metadata) {
-    return this.request(RPCCommands.UPDATE_LOBBY_MEMBER, {
-      lobby_id: lobby.id || lobby,
-      user_id: user.id || user,
-      metadata,
-    });
-  }
-
-  getRelationships() {
-    const types = Object.keys(RelationshipTypes);
-    return this.request(RPCCommands.GET_RELATIONSHIPS)
-      .then((o) => o.relationships.map((r) => ({
-        ...r,
-        type: types[r.type],
-      })));
   }
 
   /**
