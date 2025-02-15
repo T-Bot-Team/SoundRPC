@@ -2,3 +2,5 @@ node_modules
 .idea
 test.js
 LICENSE
+.npmignore
+.npmrc
